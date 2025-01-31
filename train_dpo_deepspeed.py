@@ -148,8 +148,9 @@ def main():
             if (1 + global_batch) % grad_accum_steps == 0:
 
                 current_lr = model_engine.optimizer.param_groups[0]['lr']
-                current_margin = (chosen_reward - reject_reward).item()
-                
+                current_margin = chosen_reward - reject_reward
+                torch.distributed.all_reduce(current_margin, op=torch.distributed.ReduceOp.SUM)
+                current_margin = current_margin.item()
                 # Update best reward and save checkpoint
                 if current_margin > best_reward:
                     best_reward = current_margin
